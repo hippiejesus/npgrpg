@@ -5,6 +5,8 @@ import copy
 
 import random
 
+import pickler
+
 #-----------------------------------------------------------------------
 #Globals****************************************************************
 #-----------------------------------------------------------------------
@@ -23,23 +25,16 @@ class Being:
 	#-------------------------------------------------------------------
 	#Instance Variables
 	#-------------------------------------------------------------------
-    name = " "
-    race = " "
-    prof = " "
+    name = " " ; race = " " ; prof = " "
 
     currentRoom = [0,0]
 
-    ST = 0
-    IQ = 0
-    LK = 0
-    CON = 0
-    DEX = 0
-    CHA = 0
+    ST = 0 ; IQ = 0 ; LK = 0
+    CON = 0 ; DEX = 0 ; CHA = 0
     
     currentHP = 0
 
-    height = [0,0]
-    weight = 0
+    height = [0,0] ; weight = 0
 
     inventory = []
     weightPossible = 0
@@ -64,90 +59,59 @@ class Being:
         BEINGLIST.append(self)
 	#Randomized stat selection process for PC
     def rollStats(self):
-        STtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
-        IQtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
-        LKtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
-        CONtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
-        DEXtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
-        CHAtemp = random.randint(1,6) + random.randint(1,6) + random.randint(1,6)
+        stats = []
+        statStr = ["ST: ","IQ: ","LK: ",
+                   "CON: ","DEX: ","CHA: "]
+        for i in range(6):
+			s = 0
+			for n in range (3):
+				s += random.randint(1,6)
+			stats.append(s)
 
-        print("Your stats roll in at:")
-        print("")
-        print("ST: ",STtemp)
-        print("IQ: ",IQtemp)
-        print("LK: ",LKtemp)
-        print("CON: ",CONtemp)
-        print("DEX: ",DEXtemp)
-        print("CHA: ",CHAtemp)
-        print("")
-        print("Keep stats?")
+        print("\nYour stats roll in at:\n")
+        for i in range(6):
+		    print(statStr[i]+str(stats[i]))
+        print("\nKeep stats?")
+        
         choice = raw_input("(y/n)")
 
         if choice == "y":
-            self.ST = STtemp
-            self.IQ = IQtemp
-            self.LK = LKtemp
-            self.CON = CONtemp
-            self.DEX = DEXtemp
-            self.CHA = CHAtemp
+            self.ST = stats[0] ; self.IQ = stats[1]
+            self.LK = stats[2] ; self.CON = stats[3]
+            self.DEX = stats[4] ; self.CHA = stats[5]
             self.currentHP = self.CON
             self.isPlayer = True
             print("Base attributes set!")
         elif choice == "n":
             self.rollStats()
+            
 	#Apply racial modifications to stats
     def applyRace(self):
-        if self.race == "Dwarf":
-            self.ST *= 2
-            self.CON *= 2
-            self.CHA *= (2/3)
-        elif self.race == "Elf":
-            self.IQ *= (3/2)
-            self.DEX *= (3/2)
-            self.CHA *= 2
-            self.CON *= (2/3)
-        elif self.race == "Fairy":
-            self.ST *= (1/4)
-            self.CON *= (1/4)
-            self.LK *= (3/2)
-            self.DEX *= (3/2)
-            self.CHA *= 2
-        elif self.race == "Hobbit":
-            self.ST *= (1/2)
-            self.CON *= 2
-            self.DEX *= (3/2)
-        elif self.race == "Leprechaun":
-            self.ST *= (1/2)
-            self.DEX *= (3/2)
-            self.IQ *= (3/2)
-            self.LK *= (3/2)
-        elif self.race == "Dragon":
-            self.ST *= 25
-            self.IQ *= 5
-            self.LK *= (1/2)
-            self.CON *= 50
-            self.DEX *= 3
-            self.CHA *= -5
-        elif self.race == "Goblin":
-            self.ST *= (3/4)
-            self.CON *= (3/4)
-            self.DEX *= (3/2)
-            self.CHA *= (-1/2)
-        elif self.race == "Ogre":
-            self.ST *= 2
-            self.CON *= 2
-            self.CHA *= (-3/2)
-        elif self.race == "Orc":
-            self.CHA *= -1
-        elif self.race == "Troll":
-            self.ST *= 3
-            self.CON *= 3
-            self.CHA *= -4
+        raceAdjustments = {"Human":[1,1,1,1,1,1],
+                           "Dwarf":[2,1,1,2,1,(.66)],
+                           "Elf":[1,(3/2),1,(.66),(3/2),2],
+                           "Fairy":[(.25),1,(3/2),(.25),(3/2),2],
+                           "Hobbit":[(.5),1,1,2,(3/2),1],
+                           "Leprechaun":[(.5),(3/2),(3/2),1,(3/2),1],
+                           "Dragon":[25,5,(.5),50,3,-5],
+                           "Goblin":[(.75),1,1,(.75),(3/2),(-.5)],
+                           "Ogre":[2,1,1,2,1,(-3/2)],
+                           "Orc":[1,1,1,1,1,-1],
+                           "Troll":[3,1,1,3,1,-4]}
+
+        stata = raceAdjustments[self.race][:]
+        self.ST *= stata[0] ; self.IQ *= stata[1] ; self.LK *= stata[2]
+        self.CON *= stata[3] ; self.DEX *= stata[4] ; self.CHA *= stata[5]
 
         self.weightPossible = self.ST * 100
         if self.isPlayer == True: print("racial modifiers applied.")
 	#Generate height and weight, affected by race selection.
     def heightAndWeight(self):
+        raceAdjustments = {"Dwarf":[(2/3),(7/8)],"Elf":[(11/10),1],
+		                   "Hobbit":[(1/2),(1/2)],"Fairy":[(1/10),(1/200)],
+		                   "Leprechaun":[(1/3),(1/4)],"Dragon":[10,50],
+		                   "Goblin":[(3/4),(3/4)],"Ogre":[(3/2),2],
+		                   "Troll":[2,4],"Human":[1,1]}
         randomint = random.randint(3,18)
         baseHeight = 48
         baseWeight = 75
@@ -156,59 +120,26 @@ class Being:
             baseWeight += 15
             randomint -= 1
 
-        if self.race == "Dwarf":
-            baseHeight *= (2/3)
-            baseWeight *= (7/8)
-        elif self.race == "Elf":
-            baseHeight *= (11/10)
-        elif self.race == "Hobbit":
-            baseHeight *= (1/2)
-            baseWeight *= (1/2)
-        elif self.race == "Fairy":
-            baseHeight *= (1/10)
-            baseWeight *= (1/200)
-        elif self.race == "Leprechaun":
-            baseHeight *= (1/3)
-            baseWeight *= (1/4)
-        elif self.race == "Dragon":
-            baseHeight *= 10
-            baseWeight *= 50
-        elif self.race == "Goblin":
-            baseHeight *= (3/4)
-            baseWeight *= (3/4)
-        elif self.race == "Ogre":
-            baseHeight *= (3/2)
-            baseWeight *= 2
-        elif self.race == "Troll":
-            baseHeight *= 2
-            baseWeight *= 4
+        baseHeight *= raceAdjustments[self.race][0]
+        baseWeight *= raceAdjustments[self.race][1]
 
         self.height[0] = int(baseHeight / 12)
         self.height[1] = int(baseHeight % 12)
         self.weight = baseWeight
 	#Fuction for displaying stats in a readable manner.
     def score(self):
-        print("")
-        print("Name: ",self.name)
-        print("Kin: ",self.race)
-        print("Type: ",self.type)
-        print("Level: ",self.level)
-        print("")
-        print("Height: ",self.height)
-        print("Weight: ",self.weight)
-        print("Capacity: ",self.weightPossible)
-        print("Carried: ",self.weightCarried)
-        print("")
-        print("ST: ",int(self.ST))
-        print("IQ: ",int(self.IQ))
-        print("LK: ",int(self.LK))
-        print("CON: ",int(self.CON))
-        print("DEX: ",int(self.DEX))
-        print("CHA: ",int(self.CHA))
-        print("")
-        print("HP: ",int(self.currentHP))
-        print("")
-        print("Affiliations: ",self.affiliations)
+        stats = [["\nName: ",self.name],["Kin: ",self.race],
+                 ["Type: ",self.type],["Level: ",self.level],
+                 ["\nHeight: ",self.height],["Weight: ",self.weight],
+                 ["Capacity: ",self.weightPossible],
+                 ["Carried: ",self.weightCarried],
+                 ["\nST: ",int(self.ST)],["IQ: ",int(self.IQ)],
+                 ["LK: ",int(self.LK)],["CON: ",int(self.CON)],
+                 ["DEX: ",int(self.DEX)],["CHA: ",int(self.CHA)],
+                 ["\nHP: ",int(self.currentHP)],
+                 ["\nAffiliations: ",self.affiliations]]
+        for i in stats:
+			print(i[0]+str(i[1]))
 	#Base generate function without the questioning, for creating NPCs.
     def generate(self):
         self.ST = random.randint(3,18) 
@@ -223,14 +154,14 @@ class Being:
         self.applyRace()
         self.heightAndWeight()
 	#Attack function, supplies options for attack and carries out calculations.
-	def attack(self,target):
-		attacks = ['swing','stab','trip','charge', 'shield bash', 'throw'
-		           'disarm','grapple','parry','defense','ready', 'retreat']
-		print(attacks)
-		choice = raw_input("Choose a maneuver.")
-		
-		attacksEx = [  
-		             ]
+	#def attack(self,target):
+	#	attacks = ['swing','stab','trip','charge', 'shield bash', 'throw'
+	#	           'disarm','grapple','parry','defense','ready', 'retreat']
+	#	print(attacks)
+	#	choice = raw_input("Choose a maneuver.")
+	#	
+	#	attacksEx = [  
+	#	             ]
 	
 	#Move function, calls upon room generation if room does not exist.
     def move(self,direct):
@@ -304,54 +235,15 @@ class Room:
         self.inRoom.pop(name)
 	#Randomly generate exits.
     def genExits(self):
-        rand = random.randint(1,15)
-        if(rand == 1):
-            self.exits.append("n")
-        elif(rand == 2):
-            self.exits.append("s")
-        elif(rand == 3):
-            self.exits.append("e")
-        elif(rand == 4):
-            self.exits.append("w")
-        elif(rand == 5):
-            self.exits.append("n")
-            self.exits.append("s")
-        elif(rand == 6):
-            self.exits.append("e")
-            self.exits.append("w")
-        elif(rand == 7):
-            self.exits.append("n")
-            self.exits.append("w")
-        elif(rand == 8):
-            self.exits.append("s")
-            self.exits.append("e")
-        elif(rand == 9):
-            self.exits.append("n")
-            self.exits.append("e")
-        elif(rand == 10):
-            self.exits.append("s")
-            self.exits.append("w")
-        elif(rand == 11):
-            self.exits.append("n")
-            self.exits.append("e")
-            self.exits.append("s")
-        elif(rand == 12):
-            self.exits.append("n")
-            self.exits.append("w")
-            self.exits.append("s")
-        elif(rand == 13):
-            self.exits.append("w")
-            self.exits.append("n")
-            self.exits.append("e")
-        elif(rand == 14):
-            self.exits.append("w")
-            self.exits.append("s")
-            self.exits.append("e")
-        elif(rand == 15):
-            self.exits.append("n")
-            self.exits.append("s")
-            self.exits.append("e")
-            self.exits.append("w")
+        possibleExits = [["n"],["s"],["e"],["w"],
+                         ["n","s"],["e","w"],["n","w"],
+                         ["s","e"],["n","e"],["s","w"],
+                         ["n","e","s"],["n","w","s"],
+                         ["w","n","e"],["w","s","e"],
+                         ["n","s","e","w"]]
+        exitList = random.choice(possibleExits)
+        for i in exitList:
+			self.exits.append(i)
 	#Determine the exit that will lead back to the previous room.
     def exitFrom(self,roomFrom):
 		result = [(self.coordinates[0]-roomFrom[0]),(self.coordinates[1]-roomFrom[1])]
@@ -395,11 +287,8 @@ class Room:
 		if getRoom(eastCoordinates) != False: nearbyEnvironments.append(getRoom(eastCoordinates).environment)
 		if getRoom(westCoordinates) != False: nearbyEnvironments.append(getRoom(westCoordinates).environment)
 		
-		numDesert = 0
-		numAquatic = 0
-		numForest = 0
-		numGrassland = 0
-		numTundra = 0
+		numDesert = 0 ; numAquatic = 0 ; numForest = 0
+		numGrassland = 0 ; numTundra = 0
 		
 		for i in nearbyEnvironments:
 				if i == "desert": numDesert += 1
@@ -635,6 +524,23 @@ def printMap():
 		hy -= 1
 		rows -= 1
 
+#Function to save the game
+def saveGame():
+    saveName = raw_input("Save Name: ")
+    data = [BEINGLIST,ROOMLIST,GROUPLIST,ORGLIST,NATIONLIST,player.name]
+    save = pickler.pickleSession(saveName,data)
+    
+#Function to load the game
+def loadGame():
+    global BEINGLIST, ROOMLIST, GROUPLIST, ORGLIST, NATIONLIST
+    saveName = raw_input("Save Name: ")
+    data = []
+    load = pickler.snackTime(saveName)
+    data = load.data()
+    BEINGLIST = data[0][:] ; ROOMLIST = data[1][:] ; GROUPLIST = data[2][:]
+    ORGLIST = data[3][:] ; NATIONLIST = data[4][:]
+    return getBeing(data[5])
+
 #-----------------------------------------------------------------------
 #START OF PROGRAM*******************************************************
 #-----------------------------------------------------------------------
@@ -694,6 +600,8 @@ while quit == 0:
         player.score()
 
     #hidden commands.
+    if choice == "#SG": saveGame()
+    if choice == "#LG": player = loadGame()
     if choice == "#GROUPLIST" or choice == "#GL": print(GROUPLIST)
     if choice == "#ROOMLIST" or choice == "#RL": print(ROOMLIST)
     if choice == "#BEINGLIST" or choice == "#BL": print(BEINGLIST)
