@@ -1,11 +1,15 @@
 #-----------------------------------------------------------------------
 #Imports****************************************************************
 #-----------------------------------------------------------------------
+import os
+
 import copy
 
 import random
 
 import pickler
+
+import dungen
 
 #-----------------------------------------------------------------------
 #Globals****************************************************************
@@ -206,6 +210,7 @@ class Room:
     name = " "
     coordinates = [0,0]
     inRoom = []
+    localMap = ""
 
     exits = []
     description = " "
@@ -264,6 +269,16 @@ class Room:
     #*Randomly generate room features (in progress)
     def genFeatures(self):
 		possibleFeatures = {"chair":"sit","button":"press","lever":"pull"}
+    #Generate localMap based off of environment type.
+    def genMap(self):
+		if self.environment == 'forest': self.localMap = dungen.genF()
+		elif self.environment == 'tundra': self.localMap = dungen.genT()
+		elif self.environment == 'desert': self.localMap = dungen.genD()
+		elif self.environment == 'grassland': self.localMap = dungen.genG()
+		elif self.environment == 'aquatic': self.localMap = dungen.genA()
+		elif self.environment == 'nothing':
+			self.environment = random.choice(['forest','tundra','desert','grassland','aquatic'])
+			self.genMap()
     #Generate environment based off of adjacent rooms (shall be expanded upon)
     def genEnvironment(self):
 		global ROOMLIST
@@ -360,6 +375,7 @@ class Room:
 			surveylist = survey.keys()
 			self.environment = surveylist[random.randint(0,4)]
 		self.symbol = self.environment[:1]
+		self.genMap()
 	#**Check if name is in the room. (currently unused)
     def isInRoom(self,name):
         if(name in self.inRoom):
@@ -497,6 +513,7 @@ def genGroup(organization = "None"):
 
 #Function to print map.
 def printMap():
+	os.system('clear')
 	cdict = {'a':col(27),'g':col(118),'d':col(221),'t':col(15),'f':col(34),'n':col(252)}
 	xlist = []
 	ylist = []
@@ -527,6 +544,50 @@ def printMap():
 		hy -= 1
 		rows -= 1
 	print(col(15))
+	raw_input('')
+		
+#Function to interact with local map.
+def goLocal():
+	os.system('clear')
+	local = 1
+	cdic = {}
+	moves = {'n':-26,'s':26,'e':1,'w':-1}
+	room = getRoom(player.currentRoom)
+	lMap = room.localMap
+	for being in BEINGLIST:
+		if being.currentRoom == player.currentRoom:
+			location = random.choice([29])
+			cdic.update({being:location})
+			
+	splitMap = lMap.split('m')
+	while local == 1:
+		
+		i = 0
+		nMap = []
+		for charSet in splitMap:
+			skip = 0
+			for being in cdic:
+				if i == cdic[being]:
+					nMap.append(col(15)+'@')
+					skip = 1
+			if skip == 0: nMap.append(charSet+'m')
+			i += 1
+		lMap = "".join(nMap)
+		print(lMap)
+		choice = raw_input('...')
+		os.system('clear')
+		if choice in moves.keys():
+			newnum = cdic[player]+moves[choice]
+			if newnum in range(3,364):
+				cdic[player] = newnum
+		elif choice == 'exit':
+			local = 0
+		elif choice == 'where':
+			print(cdic[player])
+			raw_input('')
+				
+					
+				
 		
 
 #Function to save the game
@@ -571,6 +632,8 @@ player.currentRoom = [0,1]
 #-----------------------------------------------------------------------
 quit = 0
 while quit == 0:
+    os.system('clear')
+    print(getRoom(player.currentRoom).localMap)
     print("Biome: ",getRoom(player.currentRoom).environment)
     print("Exits: ",getRoom(player.currentRoom).exits)
     for i in BEINGLIST:
@@ -578,7 +641,6 @@ while quit == 0:
 				print(i.name+" is here.")
     
     choice = raw_input("...")
-
     if choice == "quit": quit = 1
 
 	#Movement input.
@@ -588,8 +650,11 @@ while quit == 0:
     if choice == "w": player.move("w")
 
     if choice == "map": printMap()
+    
+    if choice == "visit": goLocal()
 
     if choice == "evaluate" or choice == "eval":
+		os.system('clear')
 		cnum = 0
 		cdic = {}
 		for being in BEINGLIST:
@@ -601,19 +666,24 @@ while quit == 0:
 		if(int(dec) in cdic.keys()):
 			call = cdic[int(dec)]
 			getBeing(call).score()
+			raw_input('')
 
     if choice == "where":
+        os.system('clear')
         print(getRoom(player.currentRoom).coordinates)
+        raw_input('')
 
     if choice == "score":
+        os.system('clear')
         player.score()
+        raw_input('')
 
     #hidden commands.
     if choice == "#SG": saveGame()
     if choice == "#LG": player = loadGame()
-    if choice == "#GROUPLIST" or choice == "#GL": print(GROUPLIST)
-    if choice == "#ROOMLIST" or choice == "#RL": print(ROOMLIST)
-    if choice == "#BEINGLIST" or choice == "#BL": print(BEINGLIST)
+    if choice == "#GROUPLIST" or choice == "#GL": print(GROUPLIST) ; raw_input('')
+    if choice == "#ROOMLIST" or choice == "#RL": print(ROOMLIST) ; raw_input('')
+    if choice == "#BEINGLIST" or choice == "#BL": print(BEINGLIST) ; raw_input('')
     if choice == "#CHARGEN" or choice == "#CG": genChar()
     if choice == "#GROUPGEN" or choice == "#GG": genGroup()
     if choice == "#EXIT" or choice == "#E":
