@@ -497,6 +497,7 @@ def genGroup(organization = "None"):
 
 #Function to print map.
 def printMap():
+	cdict = {'a':col(27),'g':col(118),'d':col(221),'t':col(15),'f':col(34),'n':col(252)}
 	xlist = []
 	ylist = []
 	for i in ROOMLIST:
@@ -516,13 +517,17 @@ def printMap():
 			if getRoom([tx,hy]) != False:
 				if [tx,hy] == [0,0]:
 					line += "#"
-				else: line += getRoom([tx,hy]).symbol
-			else: line += "-"
+				else:
+					roomiq = getRoom([tx,hy]).symbol
+					line += cdict[roomiq]+roomiq
+			else: line += col(252)+"-"
 			tx += 1
 			c -= 1
 		print(line)
 		hy -= 1
 		rows -= 1
+	print(col(15))
+		
 
 #Function to save the game
 def saveGame():
@@ -540,6 +545,10 @@ def loadGame():
     BEINGLIST = data[0][:] ; ROOMLIST = data[1][:] ; GROUPLIST = data[2][:]
     ORGLIST = data[3][:] ; NATIONLIST = data[4][:]
     return getBeing(data[5])
+
+#Function to apply color to text
+def col(c):
+	return "\033[38;5;"+str(c)+"m"  
 
 #-----------------------------------------------------------------------
 #START OF PROGRAM*******************************************************
