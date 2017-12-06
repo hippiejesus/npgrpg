@@ -86,7 +86,7 @@ class Being:
             self.currentHP = self.CON
             self.isPlayer = True
             print("Base attributes set!")
-        elif choice == "n":
+        else:
             self.rollStats()
             
 	#Apply racial modifications to stats
@@ -240,8 +240,7 @@ class Room:
         self.inRoom.pop(name)
 	#Randomly generate exits.
     def genExits(self):
-        possibleExits = [["n"],["s"],["e"],["w"],
-                         ["n","s"],["e","w"],["n","w"],
+        possibleExits = [["n","s"],["e","w"],["n","w"],
                          ["s","e"],["n","e"],["s","w"],
                          ["n","e","s"],["n","w","s"],
                          ["w","n","e"],["w","s","e"],
@@ -252,9 +251,6 @@ class Room:
 	#Determine the exit that will lead back to the previous room.
     def exitFrom(self,roomFrom):
 		result = [(self.coordinates[0]-roomFrom[0]),(self.coordinates[1]-roomFrom[1])]
-		print(self.coordinates)
-		print(roomFrom)
-		print(result)
 		if(result[0] == -1): 
 			self.exits.append("e")
 		elif(result[0] == 1): 
@@ -319,29 +315,29 @@ class Room:
 			 
 			top = inverted_survey.get(max(survey.values()))
 			if top == "desert": 
-			    if random.randint(0,10) > 3: self.environment = "desert"
+			    if random.randint(0,10) > 1: self.environment = "desert"
 			    else:
-					if random.randint(0,10) > 4: self.environment = "tundra"
+					if random.randint(0,10) > 3: self.environment = "grassland"
 					else:
-						if random.randint(0,10) > 5: self.environment = "grassland"
+						if random.randint(0,10) > 5: self.environment = "forest"
 						else:
-							if random.randint(0,10) > 6: self.environment = "forest"
+							if random.randint(0,10) > 6: self.environment = "tundra"
 							else:
 								if random.randint(0,10) > 7: self.environment = "aquatic"
 				
 			if top == "tundra": 
-			    if random.randint(0,10) > 3: self.environment = "tundra"
+			    if random.randint(0,10) > 1: self.environment = "tundra"
 			    else:
-					if random.randint(0,10) > 4: self.environment = "grassland"
+					if random.randint(0,10) > 3: self.environment = "grassland"
 					else:
-						if random.randint(0,10) > 5: self.environment = "desert"
+						if random.randint(0,10) > 5: self.environment = "forest"
 						else:
-							if random.randint(0,10) > 6: self.environment = "forest"
+							if random.randint(0,10) > 6: self.environment = "desert"
 							else:
 								if random.randint(0,10) > 7: self.environment = "aquatic"
 				
 			if top == "grassland": 
-			    if random.randint(0,10) > 3: self.environment = "grassland"
+			    if random.randint(0,10) > 1: self.environment = "grassland"
 			    else:
 					if random.randint(0,10) > 4: self.environment = "forest"
 					else:
@@ -351,9 +347,9 @@ class Room:
 							else:
 								if random.randint(0,10) > 7: self.environment = "desert"
 			if top == "forest": 
-			    if random.randint(0,10) > 3: self.environment = "forest"
+			    if random.randint(0,10) > 2: self.environment = "forest"
 			    else:
-					if random.randint(0,10) > 4: self.environment = "grassland"
+					if random.randint(0,10) > 3: self.environment = "grassland"
 					else:
 						if random.randint(0,10) > 5: self.environment = "aquatic"
 						else:
@@ -614,33 +610,55 @@ def col(c):
 #-----------------------------------------------------------------------
 #START OF PROGRAM*******************************************************
 #-----------------------------------------------------------------------
-nameChoice = raw_input("Name: ")
-raceChoice = raw_input("Race: ") 
-player = Being(nameChoice,raceChoice)
-player.rollStats()
+raceChoices = {1:"Human",
+               2:"Dwarf",
+               3:"Elf",
+               4:"Fairy",
+               5:"Hobbit",
+               6:"Leprechaun",
+               7:"Dragon",
+               8:"Goblin",
+               9:"Ogre",
+               10:"Orc",
+               11:"Troll"}
+
+nameChoice = raw_input('Name: ')
+if nameChoice != "#LG" : 
+    raceChoice = raceChoices[int(raw_input('Race:\n'+str(raceChoices)))]
+else: raceChoice = 'Human'
+player = Being(nameChoice, raceChoice)
+if nameChoice != "#LG" : player.rollStats()
 player.applyRace()
 player.heightAndWeight()
-player.score()
 
-print(ROOMLIST)
-makeRoom([0,1],[0,0])
-print(ROOMLIST)
-player.currentRoom = [0,1]
+
+makeRoom([0, 1], [0, 0])
+
+player.currentRoom = [0, 1]
 
 #----------------------------------------------------------------------`	-
 #MAIN LOOP**************************************************************
 #-----------------------------------------------------------------------
+simulate=0
+simulateT=0
 quit = 0
 while quit == 0:
-    os.system('clear')
-    print(getRoom(player.currentRoom).localMap)
-    print("Biome: ",getRoom(player.currentRoom).environment)
-    print("Exits: ",getRoom(player.currentRoom).exits)
-    for i in BEINGLIST:
-			if player.currentRoom == i.currentRoom:
-				print(i.name+" is here.")
-    
-    choice = raw_input("...")
+    if nameChoice == "#LG" :
+        player = loadGame() ; nameChoice = ''
+    if simulate == 0:
+        os.system('clear')
+        print(getRoom(player.currentRoom).localMap)
+        print ('Biome: ', getRoom(player.currentRoom).environment)
+        print ('Exits: ', getRoom(player.currentRoom).exits)
+        for i in BEINGLIST:
+            if player.currentRoom == i.currentRoom:
+                print(i.name + ' is here.')
+        choice = raw_input('...')
+    else:
+        simulateT -= 1
+        choice = ''
+        if simulateT==0:
+            simulate = 0
     if choice == "quit": quit = 1
 
 	#Movement input.
@@ -652,6 +670,11 @@ while quit == 0:
     if choice == "map": printMap()
     
     if choice == "visit": goLocal()
+
+    if choice == 'sim':
+        simulate = 1
+        simulateT = int(input("# of turns:"))
+        print("Simulating...")
 
     if choice == "evaluate" or choice == "eval":
 		os.system('clear')
