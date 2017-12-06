@@ -914,12 +914,12 @@ def col(c):
 # -----------------------------------------------------------------------
 
 nameChoice = input('Name: ')
-raceChoice = input('Race: ')
+if nameChoice != "#LG" : raceChoice = input('Race: ')
+else: raceChoice = 'Human'
 player = Being(nameChoice, raceChoice)
-player.rollStats()
+if nameChoice != "#LG" : player.rollStats()
 player.applyRace()
 player.heightAndWeight()
-player.score()
 
 print(ROOMLIST)
 makeRoom([0, 1], [0, 0])
@@ -933,6 +933,8 @@ simulate=0
 simulateT=0
 quit = 0
 while quit == 0:
+    if nameChoice == "#LG" :
+        player = loadGame() ; nameChoice = ''
     if simulate == 0:
         os.system('clear')
         print(getRoom(player.currentRoom).localMap)
@@ -941,7 +943,6 @@ while quit == 0:
         for i in BEINGLIST:
             if player.currentRoom == i.currentRoom:
                 print(i.name + ' is here.')
-    
         choice = input('...')
     else:
         simulateT -= 1
