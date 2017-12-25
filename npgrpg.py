@@ -11,6 +11,8 @@ import pickler
 
 import dungen
 
+import names
+
 #-----------------------------------------------------------------------
 #Globals****************************************************************
 #-----------------------------------------------------------------------
@@ -23,6 +25,20 @@ NATIONLIST = []
 #-----------------------------------------------------------------------
 #Classes****************************************************************
 #-----------------------------------------------------------------------
+
+#Class handling items
+class Item:
+    def __init__(self,name,slot,modifier):
+        self.name = name
+        self.slot = slot
+        self.modifier = modifier
+        self.layDesc = ''
+        
+    def setLayDesc(self,desc):
+        self.layDesc = desc
+        
+    
+        
 
 #All 'living' things in the game are Beings, NPC or Player alike
 class Being:
@@ -45,21 +61,26 @@ class Being:
     weightCarried = 0
 
     level = 0
-    type = "Commoner"
+    type = "Wanderer"
     
     affiliations = {'None':'Freelance'} #nation, organization, group
     
     isPlayer = False
     
+    npc_state = 'wander'
     npc_attitudes = []
     npc_values = []
     npc_beliefs = []
-    npc_behaviors = []
+    npc_intentions = []
+    schedule = [] #Action sequence for NPC
+    met = [] #list of characters this character has met
+    seen = [] #list of characters this character has seen
     
 	#Initialize new Being
     def __init__(self,name,race):
         self.name = name
         self.race = race
+        self.inventory = []
         BEINGLIST.append(self)
 	#Randomized stat selection process for PC
     def rollStats(self):
@@ -130,6 +151,12 @@ class Being:
         self.height[0] = int(baseHeight / 12)
         self.height[1] = int(baseHeight % 12)
         self.weight = baseWeight
+	#Function for putting or getting to inventory
+    def useInv(self,item,io):
+        if io == 0:
+            self.inventory.append(item)
+        elif io == 1:
+            self.inventory.pop(item)
 	#Fuction for displaying stats in a readable manner.
     def score(self):
         stats = [["\nName: ",self.name],["Kin: ",self.race],
@@ -195,12 +222,32 @@ class Being:
                 makeRoom(nextRoom[:],ref)
                 self.currentRoom = nextRoom[:]
                 if self.isPlayer == True: print("You enter the next room.")
+    
+    #Function to evaluate beliefs, attitudes, values, and intentions
+    def evalStatus(self):
+		attitudes = self.npc_attitudes
+		values = self.npc_values
+		beliefs = self.npc_beliefs
+		intentions = self.npc_intentions
+    
+    #Function to evaluate the state the NPC is in and change it if a break condition is met.
+    def evalState(self):
+		self.evalStatus()
+		state = self.npc_state
+		attitudes = self.npc_attitudes
+		values = self.npc_values
+		beliefs = self.npc_beliefs
+		intentions = self.npc_intentions
+		#Beliefs will shape what the npc does. attitudes will shape who they do it to.
+		#Values will shape how they do it.
     def takeTurn(self):
 		#For now, all NPCs will wander aimlessly. 
 		#Later, the action the NPC takes will depend on a number of factors.
         direction = ["n","s","e","w"]
-        if('wander' in self.npc_behaviors):
+        if(self.npc_state == 'wander'):
 			self.move(direction[random.randint(0,3)])
+        self.evalState()
+
 
 #Class handling random generation and parameter manipulation for rooms.
 class Room:
@@ -227,6 +274,7 @@ class Room:
         self.name = name
         self.coordinates = coordinates
         self.exits = []
+        self.inRoom = []
         self.genExits()
         self.genEnvironment()
         addRoom(self)
@@ -387,7 +435,7 @@ class Group:
 	population = 0
 	center = []
 	members = []
-	kind = 'group' #Can also be organization or nation
+	kind = 'group'
 	ambitions = []
 	
 	def __init__(self,name):
@@ -414,6 +462,16 @@ class Group:
 		if(member is Group):
 			self.population -= member.population
 		
+#Class handling nations
+class Nation:
+	def __init__(self,name):
+		self.name = name
+		self.loc_topLeft = [] #Coordinates of top left of nation territory
+		self.loc_bottomRight = [] #Coordinates of bottom right of nation territory
+		self.politicalSystem = ''
+		self.values = []
+		self.groups = {} #Groups, organized by [role:group] 
+
 #-----------------------------------------------------------------------
 #Functions**************************************************************
 #-----------------------------------------------------------------------
@@ -460,6 +518,10 @@ def addRoom(room):
     rooms.append(room)
     ROOMLIST = rooms
 
+def genCharName():
+	name = names.get_full_name()
+	return name
+
 #Function to generate randomized names.
 def genName():
     name = " "
@@ -473,10 +535,9 @@ def genName():
 
 #Function to generate random Non-Player Characters
 def genChar(group = "None", org = "None"):
-	test = Being(genName(),"Human")
+	test = Being(genCharName(),"Human")
 	test.generate()
 	test.affiliations = test.affiliations.copy()
-	test.npc_behaviors.append('wander')
 	if(group != "None"):
 		tgroup = getGroup(group)
 		tgroup.addMember(test)
@@ -487,7 +548,8 @@ def genChar(group = "None", org = "None"):
 	else: test.currentRoom = [0,1]
 
 def genGroup(organization = "None"):
-	test = Group(genName())
+	nameList = open('orgnames.txt').readlines()
+	test = Group(random.choice(nameList)[:-2])
 	GROUPLIST.append(test)
 	roomint = random.randint(0,len(ROOMLIST)-1)
 	pop = random.randint(1,15)
@@ -635,12 +697,19 @@ player.heightAndWeight()
 makeRoom([0, 1], [0, 0])
 
 player.currentRoom = [0, 1]
+#Testing item creation and room description.
+testBook = Item('book',['held','read'],0)
+testBook.setLayDesc('collecting dust...')
 
+getRoom(player.currentRoom).enter(testBook)
 #----------------------------------------------------------------------`	-
 #MAIN LOOP**************************************************************
 #-----------------------------------------------------------------------
 simulate=0
 simulateT=0
+simX = 0
+simY = 0
+simP = 0
 quit = 0
 while quit == 0:
     if nameChoice == "#LG" :
@@ -653,12 +722,22 @@ while quit == 0:
         for i in BEINGLIST:
             if player.currentRoom == i.currentRoom:
                 print(i.name + ' is here.')
+                if i not in player.seen:
+					player.seen.append(i)
+		for n in getRoom(player.currentRoom).inRoom:
+			print(n.name + ' lays here, '+n.layDesc)
         choice = raw_input('...')
     else:
         simulateT -= 1
         choice = ''
+        simY += 1
+        simP = simY/simX
+        print(str(str(simP))+'%'+' | turn: '+str(simY))
         if simulateT==0:
             simulate = 0
+            simY = 0
+            simX = 0
+            simP = 0
     if choice == "quit": quit = 1
 
 	#Movement input.
@@ -670,10 +749,13 @@ while quit == 0:
     if choice == "map": printMap()
     
     if choice == "visit": goLocal()
+    
+    if choice == "seen": print(''.join(x.name+', ' for x in player.seen)) ; raw_input('')
 
     if choice == 'sim':
         simulate = 1
         simulateT = int(input("# of turns:"))
+        simX = simulateT/100
         print("Simulating...")
 
     if choice == "evaluate" or choice == "eval":
@@ -690,6 +772,42 @@ while quit == 0:
 			call = cdic[int(dec)]
 			getBeing(call).score()
 			raw_input('')
+
+    if choice == "drop":
+        os.system('clear')
+        cnum = 0
+        cdic = {}
+        for item in player.inventory:
+			cdic.update({cnum:item.name})
+			cnum += 1
+        print(cdic)
+        dec = raw_input("Which item?")
+        if(int(dec) in cdic.keys()):
+			call = int(dec)
+			room = getRoom(player.currentRoom)
+			room.enter(player.inventory[call])
+			player.useInv(call,1)
+
+    if choice == "get":
+        os.system('clear')
+        cnum = 0
+        cdic = {}
+        for item in getRoom(player.currentRoom).inRoom:
+			cdic.update({cnum:item.name})
+			cnum+=1
+        print(cdic)
+        dec = raw_input("Which item?")
+        if(int(dec) in cdic.keys()):
+			call = int(dec)
+			room = getRoom(player.currentRoom)
+			player.useInv(room.inRoom[call],0)
+			room.exit(call)
+
+    if choice == "inv":
+		os.system('clear')
+		for i in player.inventory:
+			print(i.name)
+		raw_input('')
 
     if choice == "where":
         os.system('clear')
@@ -720,5 +838,9 @@ while quit == 0:
 		print("Room added.")
 		
     for b in BEINGLIST:
+		for i in BEINGLIST:
+			if b.currentRoom == i.currentRoom:
+				if i not in b.seen:
+					b.seen.append(i)
 		if b.isPlayer == False:
 			b.takeTurn()

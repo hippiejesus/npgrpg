@@ -1,0 +1,19 @@
+affiliations
+*occupation(s)
+
+npc_state : Current action being attempted
+
+npc_attitudes 
+npc_values
+npc_beliefs
+
+*npc_fears
+*npc_wants
+*npc_needs
+
+*npc_traits : list builds over time as the npc behaves in certain ways
+npc_intentions : influenced by attitudes, values, and beliefs
+
+schedule = [] #Action sequence for NPC
+met = [] #list of characters this character has met
+seen = [] #list of characters this character has seen

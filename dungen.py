@@ -131,4 +131,3 @@ def testG():
 	
 def testA():
 	print(genA())
-testA()
