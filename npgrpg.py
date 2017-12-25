@@ -724,8 +724,9 @@ while quit == 0:
                 print(i.name + ' is here.')
                 if i not in player.seen:
 					player.seen.append(i)
-		for n in getRoom(player.currentRoom).inRoom:
-			print(n.name + ' lays here, '+n.layDesc)
+		
+        for n in getRoom(player.currentRoom).inRoom:
+            print(n.name + ' lays here, '+n.layDesc)
         choice = raw_input('...')
     else:
         simulateT -= 1
