@@ -1,0 +1,19 @@
+Parts of Nation (PAN)
+
+Justice: Group, or groups, responsible for upholding the nation's justice system. May also include military.
+
+Crafts: Group, or groups, responsible for crafting necessary material goods for the nation's growth.
+
+Laborers: Field workers, miners, haulers, etc.
+
+Politics: responsible for upholding nation's political system.
+
+Scholars: intellectual elite of the nation.
+
+Religion: upholders of the religious traditions of the nation
+
+Merchants: buys and sells goods and establishes trade lines with other settlements.
+
+Underworld: the criminal network of the nation.
+
+(Justice, Crafts, Laborers, Politics, Scholars, Religion, Merchants, Underworld)

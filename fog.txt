@@ -1,0 +1,43 @@
+#Forms of Governance (FOG)
+#
+#(Justice, Crafts, Laborers, Politics, Scholars, Religion, Merchants, Underworld) #number of each org (can be multiplied to scale)
+#[] # groups in power
+#
+Kraterocracy - Rule by the strong; a system of governance where those who are strong enough to seize power through physical force, social maneuvering or political cunning.
+{'J':3,'C':1,'L':2,'P':1,'S':1,'R':1,'M':2,'U':2} [Justice, Politics, Merchants, Underworld]
+#
+Plutocracy - Rule by the wealthy; a system wherein governance is indebted to, dependent upon or heavily influenced by the desires of the rich.
+{'J':1,'C':2,'L':2,'P':1,'S':2,'R':1,'M':1,'U':2} [Merchants,Underworld]
+#
+Geniocracy - Rule by the intelligent; a system of governance where creativity, innovation, intelligence and wisdom are required for those who wish to govern.
+{'J':1,'C':2,'L':1,'P':0,'S':3,'R':1,'M':2,'U':0} [Scholars]
+#
+Meritocracy - Rule by the meritorious; a system of governance where groups are selected on the basis of people's ability, knowledge in a given area, and contributions to society.
+{'J':1,'C':2,'L':2,'P':1,'S':1,'R':1,'M':1,'U':1} [Any]
+#
+Technocracy - Rule by the educated or technical experts.
+{'J':1,'C':3,'L':2,'P':0,'S':2,'R':1,'M':1,'U':0} [Craftsmen, Scholars]
+#
+Timocracy - Rule by the honourable; a system of governance ruled by honorable citizens and property owners.
+{'J':2,'C':2,'L':2,'P':0,'S':1,'R':1,'M':1,'U':0} [Any]
+#
+Autocracy - Power resides in the hands of one single person. That person may be, for example, an absolute monarch or a dictator.
+{'J':3,'C':2,'L':3,'P':1,'S':1,'R':1,'M':1,'U':1} [Politics]
+#
+Oligarchy - Rule by a small number of people. Differently from aristocracy, these people rule because they share a common attribute.
+{'J':2,'C':2,'L':3,'P':1,'S':1,'R':1,'M':1,'U':1} [Politics]
+#
+#Absolute monarchy - A traditional and historical system where the monarch exercises ultimate governing authority.
+#{'J':,'C':,'L':,'P':,'S':,'R':,'M':,'U':}
+#
+#Crowned republic - A form of government where the monarch (and family) is an official ceremonial entity with no political power. 
+#{'J':,'C':,'L':,'P':,'S':,'R':,'M':,'U':}
+#
+#Bankocracy - Rule by banks; a system of governance with excessive power or influence of banks and other financial authorities on public policy-making.
+#{'J':,'C':,'L':,'P':,'S':,'R':,'M':,'U':}
+#
+#Kleptocracy - Rule by thieves; a system of governance where its officials and the ruling class in general pursue personal wealth and political power at the expense of the wider population. 
+#{'J':,'C':,'L':,'P':,'S':,'R':,'M':,'U':}
+#
+#Ochlocracy - Rule by the general populace; a system of governance where mob rule is government by mob or a mass of people, or the intimidation of legitimate authorities.
+#{'J':,'C':,'L':,'P':,'S':,'R':,'M':,'U':}
