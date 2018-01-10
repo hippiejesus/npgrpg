@@ -33,9 +33,17 @@ class Item:
         self.slot = slot
         self.modifier = modifier
         self.layDesc = ''
+        self.equipped = False
         
     def setLayDesc(self,desc):
         self.layDesc = desc
+        
+    def use(self):
+	    if self.slot[1] == 'read':
+		    f = open('D/'+self.name,'r')
+		    print(f.readline())
+		    f.close()
+		    raw_input('')
         
     
         
@@ -81,6 +89,16 @@ class Being:
         self.name = name
         self.race = race
         self.inventory = []
+        self.npc_values = []
+        self.npc_beliefs = []
+        self.npc_intentions = []
+        self.schedule = []
+        self.met = []
+        self.seen = []
+        self.worn = {'head':'none','chest':'none','sleeves':'none',
+                     'legs':'none','rings':[],'amulets':[],'held':'none',
+                     'wielded':'none','feet':'none','hip':'none','body':'none',
+                     'sheathed':{'hip':'none'}}
         BEINGLIST.append(self)
 	#Randomized stat selection process for PC
     def rollStats(self):
@@ -136,7 +154,7 @@ class Being:
 		                   "Hobbit":[(1/2),(1/2)],"Fairy":[(1/10),(1/200)],
 		                   "Leprechaun":[(1/3),(1/4)],"Dragon":[10,50],
 		                   "Goblin":[(3/4),(3/4)],"Ogre":[(3/2),2],
-		                   "Troll":[2,4],"Human":[1,1]}
+		                   "Troll":[2,4],"Human":[1,1],"Orc":[1,1]}
         randomint = random.randint(3,18)
         baseHeight = 48
         baseWeight = 75
@@ -157,6 +175,14 @@ class Being:
             self.inventory.append(item)
         elif io == 1:
             self.inventory.pop(item)
+    def use(self):
+		for item in self.inventory:
+			print(item.name)
+		print('Use what?')
+		target = raw_input('...')
+		for item in self.inventory:
+			if item.name == target: item.use()
+		
 	#Fuction for displaying stats in a readable manner.
     def score(self):
         stats = [["\nName: ",self.name],["Kin: ",self.race],
@@ -240,6 +266,8 @@ class Being:
 		intentions = self.npc_intentions
 		#Beliefs will shape what the npc does. attitudes will shape who they do it to.
 		#Values will shape how they do it.
+    def takeLocal(self):
+		print('placeholder')
     def takeTurn(self):
 		#For now, all NPCs will wander aimlessly. 
 		#Later, the action the NPC takes will depend on a number of factors.
@@ -274,6 +302,7 @@ class Room:
         self.name = name
         self.coordinates = coordinates
         self.exits = []
+        self.resources = {}
         self.inRoom = []
         self.genExits()
         self.genEnvironment()
@@ -313,6 +342,13 @@ class Room:
     #*Randomly generate room features (in progress)
     def genFeatures(self):
 		possibleFeatures = {"chair":"sit","button":"press","lever":"pull"}
+    #Generate resources based off of environment type.
+    def genResources(self):
+		forestR = []
+		tundraR = []
+		desertR = []
+		grasslandR = []
+		aquaticR = []
     #Generate localMap based off of environment type.
     def genMap(self):
 		if self.environment == 'forest': self.localMap = dungen.genF()
@@ -533,6 +569,14 @@ def genName():
 
     return name
 
+#Function to generate a random beast.
+def genBaddie():
+	test = Being('Baddie','Orc')
+	test.generate()
+	test.npc_attitudes.append('hostile')
+	test.npc_state = 'waiting'
+	test.currentRoom = player.currentRoom
+
 #Function to generate random Non-Player Characters
 def genChar(group = "None", org = "None"):
 	test = Being(genCharName(),"Human")
@@ -638,6 +682,23 @@ def goLocal():
 			newnum = cdic[player]+moves[choice]
 			if newnum in range(3,364):
 				cdic[player] = newnum
+		elif choice == "worn":
+			os.system('clear')
+			print(player.worn)
+			raw_input('')
+		elif choice == "inv":
+			os.system('clear')
+			for i in player.inventory:
+				if i.equipped == True:
+					print(i.name+'(EQ)')
+				else: print(i.name)
+			raw_input('')
+		elif choice == "use":
+			player.use()
+		elif choice == "score":
+			os.system('clear')
+			player.score()
+			raw_input('')
 		elif choice == 'exit':
 			local = 0
 		elif choice == 'where':
@@ -701,7 +762,17 @@ player.currentRoom = [0, 1]
 testBook = Item('book',['held','read'],0)
 testBook.setLayDesc('collecting dust...')
 
+startShirt = Item('shirt',['chest','worn'],0)
+startShirt.setLayDesc('folded poorly.')
+startPants = Item('pants',['legs','worn'],0)
+startPants.setLayDesc('strewn about.')
+startSandals = Item('sandals',['feet','worn'],0)
+startSandals.setLayDesc('looking worn and comfortable.')
+
 getRoom(player.currentRoom).enter(testBook)
+getRoom(player.currentRoom).enter(startShirt)
+getRoom(player.currentRoom).enter(startPants)
+getRoom(player.currentRoom).enter(startSandals)
 #----------------------------------------------------------------------`	-
 #MAIN LOOP**************************************************************
 #-----------------------------------------------------------------------
@@ -726,7 +797,11 @@ while quit == 0:
 					player.seen.append(i)
 		
         for n in getRoom(player.currentRoom).inRoom:
-            print(n.name + ' lays here, '+n.layDesc)
+            if n.name[-1] == 's':
+				print('some '+n.name+' lay here, '+n.layDesc)
+            else:
+				print('a '+n.name + ' lays here, '+n.layDesc)
+            
         choice = raw_input('...')
     else:
         simulateT -= 1
@@ -788,6 +863,7 @@ while quit == 0:
 			room = getRoom(player.currentRoom)
 			room.enter(player.inventory[call])
 			player.useInv(call,1)
+			print('Dropped '+cdic[int(dec)]+'!')
 
     if choice == "get":
         os.system('clear')
@@ -798,22 +874,69 @@ while quit == 0:
 			cnum+=1
         print(cdic)
         dec = raw_input("Which item?")
-        if(int(dec) in cdic.keys()):
+        if dec == "all":
+			x = 0
+			toRemove = []
+			room = getRoom(player.currentRoom)
+			for item in room.inRoom:
+				player.useInv(room.inRoom[x],0)
+				toRemove.append(x)
+				print('Got '+cdic[x]+'!')
+				x += 1
+			for item in toRemove:
+				room.exit(0)
+			raw_input('')
+        elif(int(dec) in cdic.keys()):
 			call = int(dec)
 			room = getRoom(player.currentRoom)
 			player.useInv(room.inRoom[call],0)
 			room.exit(call)
+			print('Got '+cdic[int(dec)]+'!')
+			raw_input('')
 
     if choice == "inv":
 		os.system('clear')
 		for i in player.inventory:
-			print(i.name)
+			if i.equipped == True:
+				print(i.name+'(EQ)')
+			else: print(i.name)
+		raw_input('')
+
+    if choice == "equip":
+        os.system('clear')
+        cnum = 0
+        cdic = {}
+        for item in player.inventory:
+			cdic.update({cnum:item.name})
+			cnum += 1
+        print(cdic)
+        dec = raw_input("Which item?")
+        if(int(dec) in cdic.keys()):
+			item = player.inventory[int(dec)]
+			if item.equipped == False:
+				player.worn[item.slot[0]] = item.name
+				item.equipped = True
+				print(item.name+' equipped.')
+				raw_input('')
+			elif item.equipped == True:
+				player.worn[item.slot[0]] = 'none'
+				item.equipped = False
+				print(item.name+' removed.')
+				raw_input('')
+
+
+    if choice == "worn":
+		os.system('clear')
+		print(player.worn)
 		raw_input('')
 
     if choice == "where":
         os.system('clear')
         print(getRoom(player.currentRoom).coordinates)
         raw_input('')
+
+    if choice == "use":
+		player.use()
 
     if choice == "score":
         os.system('clear')
@@ -828,6 +951,7 @@ while quit == 0:
     if choice == "#BEINGLIST" or choice == "#BL": print(BEINGLIST) ; raw_input('')
     if choice == "#CHARGEN" or choice == "#CG": genChar()
     if choice == "#GROUPGEN" or choice == "#GG": genGroup()
+    if choice == "#BADDIEGEN" or choice == "#BG": genBaddie()
     if choice == "#EXIT" or choice == "#E":
 		ex = raw_input("direction?")
 		getRoom(player.currentRoom).exits.append(ex)
